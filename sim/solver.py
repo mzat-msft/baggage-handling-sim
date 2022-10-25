@@ -25,12 +25,10 @@ class Solver(abc.ABC):
 class SequentialSolver(Solver):
     """Solver class implementing a simple algorithm for testing purpose."""
     def solve(self, airport_sim):
-        handlers = list(airport_sim.handlers)
-        routes = {
-            handlers.pop().name: [
-                flight.number for flight in airport_sim.schedule.sort_by_actual()
-            ]
-        }
-        for handler in handlers:
-            routes[handler] = None
+        routes = {}
+        for idx, handler in enumerate(airport_sim.handlers):
+            routes[handler.name] = (
+                [flight.number for flight in airport_sim.schedule.sort_by_actual()]
+                if idx == 0 else None
+            )
         return routes

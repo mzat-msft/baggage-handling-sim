@@ -69,7 +69,9 @@ class Handler:
     route: Optional[List[str]] = None
 
     @property
-    def n_bags(self):
+    def n_bags(self) -> int:
+        if self.baggages is None:
+            return 0
         return sum(self.baggages.values())
 
     def take(self, flight_number: str, bags: int):
@@ -106,6 +108,7 @@ class Airport:
         for i, gate in enumerate(self.gates):
             if gate_number == gate.number:
                 return i
+        raise IndexError(f"Cannot find Gate {gate_number} in Airport.")
 
     def get_distance(self, gate1, gate2) -> float:
         """Return the distance of two gates."""
@@ -120,11 +123,11 @@ class Schedule:
     def __init__(self, flights: Iterable[Flight]):
         self.flights: List[Flight] = list(flights)
 
-    def __getitem__(self, flight_number: str) -> Optional[Flight]:
+    def __getitem__(self, flight_number: str) -> Flight:
         for flight in self.flights:
             if flight_number == flight.number:
                 return flight
-        return None
+        raise IndexError(f"Cannot find flight_number {flight_number} in Schedule.")
 
     def sort_by_time(self, which: str):
         return sorted(self.flights, key=operator.attrgetter(which))
@@ -234,6 +237,8 @@ class AirportSim:
     def run_routes(self):
         """Let the handlers follow their routes."""
         for handler in self.handlers:
+            if handler.route is None:
+                continue
             time = None
             prev_flight = None
             for cur in handler.route:
@@ -249,7 +254,7 @@ class AirportSim:
                     time += dt.timedelta(hours=distance_leg / handler.speed)
 
                 if cur_flight.baggages is None:
-                    if time < cur_flight.actual:
+                    if time < cur_flight.actual and handler.baggages is not None:
                         handler.baggages.pop(cur)
                 else:
                     if time < cur_flight.actual:
