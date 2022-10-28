@@ -9,6 +9,7 @@ from typing import Dict, Iterable, List, Optional, Union
 @dataclass
 class Point:
     """Used to represent the position of a Gate."""
+
     x: float
     y: float
 
@@ -27,6 +28,7 @@ class Gate:
     Gates are located somewhere in the airport. They are the place where
     flights arrive to or depart from.
     """
+
     def __init__(self, number: str, x: float, y: float):
         self.number = number
         self.location = Point(x, y)
@@ -45,6 +47,7 @@ class Flight:
     Flights have a series of properties and carry some baggages that must be
     transferred to another flight.
     """
+
     number: str
     gate_number: str
     scheduled: dt.datetime
@@ -60,11 +63,12 @@ class Handler:
     In principle, handlers can have different properties. That is some might be
     quicker, able to carry more load etc...
     """
+
     name: str
     capacity: int = 100
     load_time: int = 10 * 60  # seconds
     unload_time: int = 5 * 60  # seconds
-    speed: float = 60.  # mph
+    speed: float = 60.0  # mph
     baggages: Optional[Dict[str, int]] = None
     route: Optional[List[str]] = None
 
@@ -89,6 +93,7 @@ class Airport:
     The airport is represented here as a set of Gates. This class is useful for
     storing the distance matrix of the different gates.
     """
+
     def __init__(self, gates: Iterable[Gate]):
         self.gates: List[Gate] = list(gates)
         self.distance_matrix = self.compute_distance_matrix()
@@ -120,6 +125,7 @@ class Schedule:
 
     Schedule is used to store information on Flights.
     """
+
     def __init__(self, flights: Iterable[Flight]):
         self.flights: List[Flight] = list(flights)
 
@@ -151,6 +157,7 @@ class BaggageMatrix:
     second index will need. The actual value of the matrix is the number of
     baggages that must go from flight A to flight B.
     """
+
     def __init__(self, flights: List[Flight]):
         self.matrix = self.fill_matrix(flights)
         self.initial_baggages = len(self)
@@ -220,7 +227,7 @@ class AirportSim:
         elif all(isinstance(handler, Handler) for handler in handlers):
             return handlers
         else:
-            raise TypeError(f'Expected int or List[Handler], got {type(handlers)}')
+            raise TypeError(f"Expected int or List[Handler], got {type(handlers)}")
 
     def update_routes(self, routes: Dict[str, Optional[List[str]]]):
         for handler in self.handlers:
@@ -253,9 +260,13 @@ class AirportSim:
                     )
                     time += dt.timedelta(hours=distance_leg / handler.speed)
 
-                if cur_flight.baggages is None:
-                    if time < cur_flight.actual and handler.baggages is not None:
-                        handler.baggages.pop(cur)
+                if (
+                    cur_flight.baggages is None  # Should be departing flight
+                    and time < cur_flight.actual  # Handler arrived in time
+                    and handler.baggages is not None
+                    and cur in handler.baggages
+                ):
+                    handler.baggages.pop(cur)
                 else:
                     if time < cur_flight.actual:
                         time = cur_flight.actual
